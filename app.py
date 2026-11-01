@@ -38,8 +38,7 @@ with st.sidebar:
     model_name = st.selectbox(
         "Select AI Model",
         options=[
-            "gemini-2.5-flash",
-            "gemma-3-27b-it"
+            "gemini-3.8-flash",
         ],
         index=0
     )

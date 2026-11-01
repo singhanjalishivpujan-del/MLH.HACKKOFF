@@ -1,8 +1,3 @@
-"""
-GemmaFlow - Multimodal Open-Source Assistant powered by Gemma 4
-Built for Hacktoberfest Hack Day Ahmedabad x NavraCommunity
-"""
-
 import os
 import streamlit as st
 from PIL import Image
@@ -11,72 +6,216 @@ from google import genai
 
 load_dotenv()
 
+# Page configuration
 st.set_page_config(
-    page_title="GemmaFlow - Open-Source Multimodal AI",
+    page_title="GemmaFlow AI Assistant",
     page_icon="🌟",
     layout="wide"
 )
 
-st.title("🌟 GemmaFlow: Multimodal AI Assistant")
-st.markdown("Powered by **Gemma 4** open-weights model via Google Gemini API.")
+# Session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# Sidebar for Configuration
+# Sidebar
 with st.sidebar:
-    st.header("⚙️ Configuration")
-    api_key = st.text_input("Gemini API Key", value=os.getenv("GEMINI_API_KEY", ""), type="password")
-    model_name = st.selectbox(
-        "Model Selection",
-       options=["gemma-4-26b-a4b-it", "gemma-3-27b-it", "gemini-2.5-flash"],
-        index=0,
-        help="Gemma 4 provides lightweight multimodal reasoning."
+    st.title("🌟 GemmaFlow")
+
+    st.markdown("### ⚙️ Configuration")
+
+    api_key = st.text_input(
+        "Gemini API Key",
+        value=os.getenv("GEMINI_API_KEY", ""),
+        type="password"
     )
-    st.markdown("---")
-    st.markdown("### 🏆 Hacktoberfest Tracks")
-    st.markdown("- **Best Use of Gemma 4**")
-    st.markdown("- **Best Open-Source AI Project**")
 
-# Main Interface
-col1, col2 = st.columns([1, 1])
+    model_name = st.selectbox(
+        "Select AI Model",
+        [
+            "gemini-2.5-flash",
+            "gemma-3-27b-it"
+        ]
+    )
 
-with col1:
-    st.subheader("📤 Input Context")
+    st.divider()
+
+    page = st.radio(
+        "Navigation",
+        [
+            "🏠 Home",
+            "💬 AI Chat",
+            "🖼️ Image Analysis",
+            "✍️ Writing Assistant",
+            "💻 Coding Assistant"
+        ]
+    )
+
+    st.divider()
+
+    if st.button("🗑️ Clear Chat History"):
+        st.session_state.messages = []
+        st.rerun()
+
+    st.caption("Powered by Google Gemini API")
+
+# AI function
+def generate_response(prompt, image=None):
+
+    if not api_key:
+        return "Please enter your Gemini API Key in the sidebar."
+
+    try:
+        client = genai.Client(api_key=api_key)
+
+        contents = []
+
+        if image:
+            contents.append(image)
+
+        contents.append(prompt)
+
+        response = client.models.generate_content(
+            model=model_name,
+            contents=contents
+        )
+
+        return response.text or "No response generated."
+
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
+# HOME PAGE
+if page == "🏠 Home":
+
+    st.title("🌟 Welcome to GemmaFlow")
+
+    st.subheader("Your All-in-One AI Assistant")
+
+    st.write(
+        "One platform for learning, coding, writing, "
+        "image understanding and everyday tasks."
+    )
+
+    st.divider()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.info("📚 **Study Assistant**\n\nUnderstand topics and learn concepts.")
+
+        st.info("💻 **Coding Assistant**\n\nGenerate and explain programming code.")
+
+        st.info("🖼️ **Image Analysis**\n\nUnderstand images and diagrams.")
+
+    with col2:
+        st.info("✍️ **Writing Assistant**\n\nCreate emails, reports and captions.")
+
+        st.info("💬 **AI Chat**\n\nAsk questions and get AI responses.")
+
+        st.info("🚀 **More Features**\n\nNew capabilities coming soon.")
+
+    st.success("Select a feature from the sidebar to get started.")
+
+
+# AI CHAT
+elif page == "💬 AI Chat":
+
+    st.title("💬 AI Chat")
+
+    st.write("Ask anything and chat with your AI assistant.")
+
+    # Display previous messages
+    for message in st.session_state.messages:
+
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    user_input = st.chat_input("Ask GemmaFlow anything...")
+
+    if user_input:
+
+        st.session_state.messages.append({
+            "role": "user",
+            "content": user_input
+        })
+
+        with st.chat_message("user"):
+            st.markdown(user_input)
+
+        # Build conversation context
+        conversation = ""
+
+        for message in st.session_state.messages[:-1]:
+            conversation += (
+                f'{message["role"]}: {message["content"]}\n'
+            )
+
+        conversation += f"user: {user_input}"
+
+        with st.chat_message("assistant"):
+
+            with st.spinner("Thinking..."):
+
+                answer = generate_response(conversation)
+
+                st.markdown(answer)
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+
+# IMAGE ANALYSIS
+elif page == "🖼️ Image Analysis":
+
+    st.title("🖼️ Image Analysis")
+
+    st.write("Upload an image and ask questions about it.")
+
     uploaded_image = st.file_uploader(
-        "Upload an image (Diagram, UI mockup, or Error Screenshot)",
+        "Upload your image",
         type=["png", "jpg", "jpeg", "webp"]
     )
+
     if uploaded_image:
+
         image = Image.open(uploaded_image)
-        st.image(image, caption="Uploaded Artifact", use_column_width=True)
 
-    prompt = st.text_area(
-        "Prompt / Instructions",
-        placeholder="e.g., Explain this architecture diagram, extract API endpoints, or debug this error trace...",
-        height=140
-    )
-    analyze_btn = st.button("🚀 Analyze with Gemma 4", type="primary")
+        st.image(
+            image,
+            caption="Uploaded Image",
+            use_container_width=True
+        )
 
-with col2:
-    st.subheader("💡 Analysis & Insights")
-    if analyze_btn:
-        if not api_key:
-            st.error("Please provide a Gemini API Key in the sidebar.")
-        elif not prompt and not uploaded_image:
-            st.warning("Please provide a prompt or upload an image.")
-        else:
-            with st.spinner("Processing with Gemma 4..."):
-                try:
-                    client = genai.Client(api_key=api_key)
-                    contents = []
-                    if uploaded_image:
-                        contents.append(image)
-                    if prompt:
-                        contents.append(prompt)
+        prompt = st.text_area(
+            "What would you like to know about this image?",
+            placeholder="Describe this image..."
+        )
 
-                    response = client.models.generate_content(
-                        model=model_name,
-                        contents=contents
-                    )
-                    st.success("Analysis Complete!")
-                    st.markdown(response.text)
-                except Exception as e:
-                    st.error(f"Inference Error: {str(e)}")
+        if st.button("🔍 Analyze Image", type="primary"):
+
+            with st.spinner("Analyzing image..."):
+
+                answer = generate_response(prompt or "Describe this image.", image)
+
+                st.subheader("AI Analysis")
+                st.markdown(answer)
+
+
+# WRITING ASSISTANT
+elif page == "✍️ Writing Assistant":
+
+    st.title("✍️ Writing Assistant")
+
+    task = st.selectbox(
+        "Choose your writing task",
+        [
+            "Write an Email",
+            "Create LinkedIn Post",
+            "Write an Assignment",
+            "Create a Report",
+            "Improve Grammar",
+            "Summarize Text",
+            "Other"

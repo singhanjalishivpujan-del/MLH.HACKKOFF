@@ -4,6 +4,7 @@ from PIL import Image
 from dotenv import load_dotenv
 from google import genai
 
+# Load environment variables
 load_dotenv()
 
 # Page configuration
@@ -13,15 +14,20 @@ st.set_page_config(
     layout="wide"
 )
 
-# Session state
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # Sidebar
 with st.sidebar:
+
     st.title("🌟 GemmaFlow")
 
-    st.markdown("### ⚙️ Configuration")
+    st.caption("Your All-in-One AI Assistant")
+
+    st.divider()
+
+    st.header("⚙️ Configuration")
 
     api_key = st.text_input(
         "Gemini API Key",
@@ -31,16 +37,19 @@ with st.sidebar:
 
     model_name = st.selectbox(
         "Select AI Model",
-        [
+        options=[
             "gemini-2.5-flash",
             "gemma-3-27b-it"
-        ]
+        ],
+        index=0
     )
 
     st.divider()
 
+    st.subheader("📌 Navigation")
+
     page = st.radio(
-        "Navigation",
+        "Choose a feature",
         [
             "🏠 Home",
             "💬 AI Chat",
@@ -58,18 +67,20 @@ with st.sidebar:
 
     st.caption("Powered by Google Gemini API")
 
-# AI function
+
+# AI RESPONSE FUNCTION
 def generate_response(prompt, image=None):
 
     if not api_key:
         return "Please enter your Gemini API Key in the sidebar."
 
     try:
+
         client = genai.Client(api_key=api_key)
 
         contents = []
 
-        if image:
+        if image is not None:
             contents.append(image)
 
         contents.append(prompt)
@@ -82,7 +93,8 @@ def generate_response(prompt, image=None):
         return response.text or "No response generated."
 
     except Exception as e:
-        return f"Error: {str(e)}"
+
+        return f"AI Error: {str(e)}"
 
 
 # HOME PAGE
@@ -102,20 +114,44 @@ if page == "🏠 Home":
     col1, col2 = st.columns(2)
 
     with col1:
-        st.info("📚 **Study Assistant**\n\nUnderstand topics and learn concepts.")
 
-        st.info("💻 **Coding Assistant**\n\nGenerate and explain programming code.")
+        st.info(
+            "📚 STUDY ASSISTANT\n\n"
+            "Understand concepts and learn new topics."
+        )
 
-        st.info("🖼️ **Image Analysis**\n\nUnderstand images and diagrams.")
+        st.info(
+            "💻 CODING ASSISTANT\n\n"
+            "Generate code and debug programming errors."
+        )
+
+        st.info(
+            "🖼️ IMAGE ANALYSIS\n\n"
+            "Upload images and understand diagrams."
+        )
 
     with col2:
-        st.info("✍️ **Writing Assistant**\n\nCreate emails, reports and captions.")
 
-        st.info("💬 **AI Chat**\n\nAsk questions and get AI responses.")
+        st.info(
+            "✍️ WRITING ASSISTANT\n\n"
+            "Create emails, reports and captions."
+        )
 
-        st.info("🚀 **More Features**\n\nNew capabilities coming soon.")
+        st.info(
+            "💬 AI CHAT\n\n"
+            "Ask questions and get AI responses."
+        )
 
-    st.success("Select a feature from the sidebar to get started.")
+        st.info(
+            "🚀 FUTURE FEATURES\n\n"
+            "PDF analysis, voice assistant and web search."
+        )
+
+    st.divider()
+
+    st.success(
+        "Select any feature from the sidebar to get started!"
+    )
 
 
 # AI CHAT
@@ -123,15 +159,19 @@ elif page == "💬 AI Chat":
 
     st.title("💬 AI Chat")
 
-    st.write("Ask anything and chat with your AI assistant.")
+    st.write("Ask anything. Your AI assistant is ready!")
 
     # Display previous messages
     for message in st.session_state.messages:
 
         with st.chat_message(message["role"]):
+
             st.markdown(message["content"])
 
-    user_input = st.chat_input("Ask GemmaFlow anything...")
+    # Chat input
+    user_input = st.chat_input(
+        "Ask GemmaFlow anything..."
+    )
 
     if user_input:
 
@@ -143,15 +183,17 @@ elif page == "💬 AI Chat":
         with st.chat_message("user"):
             st.markdown(user_input)
 
-        # Build conversation context
-        conversation = ""
+        # Prepare conversation context
+        conversation = """
+        You are GemmaFlow, a helpful AI assistant.
+        Give clear, accurate and easy-to-understand answers.
+        """
 
-        for message in st.session_state.messages[:-1]:
+        for message in st.session_state.messages:
+
             conversation += (
-                f'{message["role"]}: {message["content"]}\n'
+                f"\n{message['role']}: {message['content']}"
             )
-
-        conversation += f"user: {user_input}"
 
         with st.chat_message("assistant"):
 
@@ -172,7 +214,9 @@ elif page == "🖼️ Image Analysis":
 
     st.title("🖼️ Image Analysis")
 
-    st.write("Upload an image and ask questions about it.")
+    st.write(
+        "Upload an image and ask GemmaFlow to understand it."
+    )
 
     uploaded_image = st.file_uploader(
         "Upload your image",
@@ -181,27 +225,40 @@ elif page == "🖼️ Image Analysis":
 
     if uploaded_image:
 
-        image = Image.open(uploaded_image)
+        try:
 
-        st.image(
-            image,
-            caption="Uploaded Image",
-            use_container_width=True
-        )
+            image = Image.open(uploaded_image).convert("RGB")
 
-        prompt = st.text_area(
-            "What would you like to know about this image?",
-            placeholder="Describe this image..."
-        )
+            st.image(
+                image,
+                caption="Uploaded Image",
+                use_container_width=True
+            )
 
-        if st.button("🔍 Analyze Image", type="primary"):
+            prompt = st.text_area(
+                "What would you like to know about this image?",
+                placeholder="Describe this image..."
+            )
 
-            with st.spinner("Analyzing image..."):
+            if st.button(
+                "🔍 Analyze Image",
+                type="primary"
+            ):
 
-                answer = generate_response(prompt or "Describe this image.", image)
+                with st.spinner("Analyzing image..."):
 
-                st.subheader("AI Analysis")
-                st.markdown(answer)
+                    answer = generate_response(
+                        prompt or "Describe this image in detail.",
+                        image
+                    )
+
+                    st.subheader("💡 AI Analysis")
+
+                    st.markdown(answer)
+
+        except Exception as e:
+
+            st.error(f"Image Error: {str(e)}")
 
 
 # WRITING ASSISTANT
@@ -209,7 +266,11 @@ elif page == "✍️ Writing Assistant":
 
     st.title("✍️ Writing Assistant")
 
-   task = st.selectbox(
+    st.write(
+        "Create professional and creative content with AI."
+    )
+
+    task = st.selectbox(
         "Choose your writing task",
         [
             "Write an Email",
@@ -218,26 +279,138 @@ elif page == "✍️ Writing Assistant":
             "Create a Report",
             "Improve Grammar",
             "Summarize Text",
+            "Write a Caption",
             "Other"
         ]
     )
 
     user_text = st.text_area(
         "Enter your topic or text",
-        height=180
+        height=180,
+        placeholder="Enter your content here..."
     )
 
-    if st.button("✨ Generate Content", type="primary"):
-        if user_text:
+    if st.button(
+        "✨ Generate Content",
+        type="primary"
+    ):
+
+        if user_text.strip():
+
             prompt = f"""
             Act as a professional writing assistant.
+
             Task: {task}
-            User input: {user_text}
-            Generate clear and useful content.
+
+            User input:
+            {user_text}
+
+            Generate clear, useful and well-formatted content.
+            Use simple language where appropriate.
             """
+
             with st.spinner("Creating content..."):
+
                 answer = generate_response(prompt)
-                st.markdown("### Generated Content")
+
+                st.subheader("📝 Generated Content")
+
                 st.markdown(answer)
+
         else:
-            st.warning("Please enter some text or a topic.")
+
+            st.warning(
+                "Please enter some text or a topic."
+            )
+
+
+# CODING ASSISTANT
+elif page == "💻 Coding Assistant":
+
+    st.title("💻 Coding Assistant")
+
+    st.write(
+        "Generate code, understand programming "
+        "and solve coding problems."
+    )
+
+    task = st.selectbox(
+        "Select coding task",
+        [
+            "Generate Code",
+            "Explain Code",
+            "Debug Code",
+            "Find Errors",
+            "Convert Programming Language",
+            "Optimize Code",
+            "Other"
+        ]
+    )
+
+    language = st.selectbox(
+        "Programming Language",
+        [
+            "C",
+            "C++",
+            "Python",
+            "Java",
+            "JavaScript",
+            "HTML/CSS",
+            "SQL",
+            "Other"
+        ]
+    )
+
+    code_input = st.text_area(
+        "Enter your question or code",
+        height=200,
+        placeholder="Write your coding question here..."
+    )
+
+    if st.button(
+        "🚀 Generate Solution",
+        type="primary"
+    ):
+
+        if code_input.strip():
+
+            prompt = f"""
+            Act as an expert programming assistant.
+
+            Task: {task}
+
+            Programming Language: {language}
+
+            User input:
+            {code_input}
+
+            Provide:
+            1. Correct solution.
+            2. Easy explanation.
+            3. Example output if applicable.
+
+            Use beginner-friendly language.
+            """
+
+            with st.spinner("Generating solution..."):
+
+                answer = generate_response(prompt)
+
+                st.subheader("💡 Coding Solution")
+
+                st.markdown(answer)
+
+        else:
+
+            st.warning(
+                "Please enter your question or code."
+            )
+
+
+# FOOTER
+st.divider()
+
+st.markdown(
+    "<center>🌟 GemmaFlow | Built with Python and Streamlit</center>",
+    unsafe_allow_html=True
+)

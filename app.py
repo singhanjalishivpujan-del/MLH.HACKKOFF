@@ -209,7 +209,7 @@ elif page == "✍️ Writing Assistant":
 
     st.title("✍️ Writing Assistant")
 
-    task = st.selectbox(
+   task = st.selectbox(
         "Choose your writing task",
         [
             "Write an Email",
@@ -219,3 +219,25 @@ elif page == "✍️ Writing Assistant":
             "Improve Grammar",
             "Summarize Text",
             "Other"
+        ]
+    )
+
+    user_text = st.text_area(
+        "Enter your topic or text",
+        height=180
+    )
+
+    if st.button("✨ Generate Content", type="primary"):
+        if user_text:
+            prompt = f"""
+            Act as a professional writing assistant.
+            Task: {task}
+            User input: {user_text}
+            Generate clear and useful content.
+            """
+            with st.spinner("Creating content..."):
+                answer = generate_response(prompt)
+                st.markdown("### Generated Content")
+                st.markdown(answer)
+        else:
+            st.warning("Please enter some text or a topic.")

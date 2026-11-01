@@ -26,7 +26,7 @@ with st.sidebar:
     api_key = st.text_input("Gemini API Key", value=os.getenv("GEMINI_API_KEY", ""), type="password")
     model_name = st.selectbox(
         "Model Selection",
-        options=["gemma-4", "gemma-4-it", "gemini-2.5-flash"],
+       options=["gemma-4-26b-a4b-it", "gemma-3-27b-it", "gemini-2.5-flash"],
         index=0,
         help="Gemma 4 provides lightweight multimodal reasoning."
     )
